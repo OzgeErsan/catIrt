@@ -5,7 +5,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
                     it        = NULL,
                     theta     = NULL,
                     catStart  = list( n.start = 5, init.theta = 0,
-                                      select = c("UW-FI", "LW-FI", "PW-FI",
+                                      select = c("UW-FI", "UW-FI-Modified", "LW-FI", "PW-FI",
                                                  "FP-KL", "VP-KL", "FI-KL", "VI-KL",
                                                  "random"),
                                       at = c("theta", "bounds"),
@@ -15,7 +15,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
                                                 "WLE", "BME", "EAP"),
                                       range = c(-1, 1),
                                       step.size = 3, leave.after.MLE = FALSE ),
-                    catMiddle = list( select = c("UW-FI", "LW-FI", "PW-FI",
+                    catMiddle = list( select = c("UW-FI", "UW-FI-Modified", "LW-FI", "PW-FI",
                                                  "FP-KL", "VP-KL", "FI-KL", "VI-KL",
                                                  "random"),
                                       at = c("theta", "bounds"),
@@ -36,7 +36,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
                                                     categ    = c(0, 1, 2),
                                                     delta    = .1,
                                                     alpha    = .05, beta = .05,
-                                                    conf.lev = .95)),
+                                                    conf.lev = .95, indeterminate = FALSE)),
                     ddist     = dnorm,
                     progress  = TRUE, ... )                                  
 {
@@ -208,7 +208,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
 ## I. FOR THE CATSTART LIST ##
 	
 ## LIST OF OPTIONS ##
-  sel.opt <- c("UW-FI", "LW-FI", "PW-FI", "FP-KL", "VP-KL", "FI-KL", "VI-KL", "random")
+  sel.opt <- c("UW-FI", "UW-FI-Modified", "LW-FI", "PW-FI", "FP-KL", "VP-KL", "FI-KL", "VI-KL", "random")
   at.opt  <- c("theta", "bounds")
   sco.opt <- c("fixed", "step", "random", "WLE", "BME", "EAP")
 
@@ -387,7 +387,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
 ## II. FOR THE CATMIDDLE LIST ##
 
 ## LIST OF OPTIONS ##
-  sel.opt <- c("UW-FI", "LW-FI", "PW-FI", "FP-KL", "VP-KL", "FI-KL", "VI-KL", "random")
+  sel.opt <- c("UW-FI", "UW-FI-Modified", "LW-FI", "PW-FI", "FP-KL", "VP-KL", "FI-KL", "VI-KL", "random")
   at.opt   <- c("theta", "bounds")
   sco.opt  <- c("MLE", "WLE", "BME", "EAP")
 
@@ -936,6 +936,9 @@ catIrt <- function( params, mod = c("brm", "grm"),
 
   } # END if STATEMENT
 
+## g7) c.term --> indeterminate ##
+  if( any(catTerm$term == "class") & is.null(catTerm$c.term$indeterminate) )
+    catTerm$c.term$indeterminate <- FALSE
 
 ######################## END ARGUMENT CHECK SECTION #######################
 ###########################################################################
@@ -1009,7 +1012,9 @@ catIrt <- function( params, mod = c("brm", "grm"),
     resp.i      <- resp[i, ]
     
     catStart.i  <- catStart
+    catStart.i$phase1.theta <- catStart.i$phase1.theta[i]
     catMiddle.i <- catMiddle
+    catMiddle.i$phase1.theta <- catMiddle.i$phase1.theta[i]
     catTerm.i   <- catTerm
     catTerm.i$n.max <- catTerm.i$n.max[i]
   
@@ -1177,6 +1182,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
     tot_categ[i] <- catTerm.i$c.term$categ[sum( tot_theta[i] > catTerm.i$c.term$bounds ) + 1]  # based on total-test thetas
   	
     if( !is.null(theta) )
+      # But if theta[i] = catTerm.i$c.term$bounds (like in MOCCA), these simulees are true indeterminates. What should we do?
       true_categ[i] <- catTerm.i$c.term$categ[sum( theta[i] > catTerm.i$c.term$bounds ) + 1]  # based on true thetas
     
   } # END if STATEMENT

@@ -62,7 +62,7 @@ function( cat_par, cat_resp,
     
     } else {
     
-      categ <- NA
+      categ <- "ID"
       
     } # END if STATEMENTS
   

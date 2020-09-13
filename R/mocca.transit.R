@@ -4,18 +4,24 @@
 
 # n.options can be 3 or 5. Currently this function works only for 3-alternative items.
 mocca.transit <- function(theta2, params2, catIrt.object){
+  
   # N and J are specified by the original function. 
   N <- dim(catIrt.object$full_resp)[1] # N is sample size (person)
   J <- dim(catIrt.object$full_resp)[2] # J is item bank size
+  
   # Create a blank list to fill with selected information obtained by catIrt for theta1
   cat_indiv2 <- vector(mode="list", length=N)
   cat_indiv <- catIrt.object$cat_indiv
+  
+  # Create a blank vector that will indicate which items were administered in phase1. So block them for phase2.
+  it.vec <- matrix(0, nrow = N, ncol = J)
   
   for(i in 1:N){
     # cat_indiv[[i]][c(2,5)]  gives item IDs, and examinee responses (0 or 1)
     cat_indiv2[[i]] <- cat_indiv[[i]][c(2,5)]   
     # cat_resp2 is for all responses (e.g. 0,1,2)
     cat_indiv2[[i]]$cat_resp2 <- vector("numeric", length=length(cat_indiv[[i]]$cat_resp))
+    
     
     # Insert simulated responses in "cat_resp2" 
     for(n in 1:length(cat_indiv2[[i]]$cat_resp2)){
@@ -33,8 +39,13 @@ mocca.transit <- function(theta2, params2, catIrt.object){
           if(p2.star > u){cat_indiv2[[i]]$cat_resp2[n] <- 3} else {cat_indiv2[[i]]$cat_resp2[n] <- 1}
         }
     }
+    
+    # Indicate which items were administered already by "1".
+    for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it){
+      it.vec[i, catIrt.object$cat_indiv[[i]]$cat_it[j]] <- 1
+    }
   }
-  return(cat_indiv2=cat_indiv2)
+  return(list(cat_indiv=cat_indiv2, it.vec=it.vec))
 }
   
   
