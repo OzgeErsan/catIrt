@@ -23,7 +23,7 @@ mocca.transit <- function(theta2, params2, catIrt.object){
     cat_indiv2[[i]]$cat_resp2 <- vector("numeric", length=length(cat_indiv[[i]]$cat_resp))
     
     
-    # Insert simulated responses in "cat_resp2" 
+    # Insert simulated responses for dimension2 in "cat_resp2" 
     for(n in 1:length(cat_indiv2[[i]]$cat_resp2)){
       # If cat_indiv[[i]]$cat_it=1, cat_indiv2[[i]]$cat_it=1
       # If cat_indiv[[i]]$cat_it=0, generate response (0 or 2).
@@ -41,7 +41,7 @@ mocca.transit <- function(theta2, params2, catIrt.object){
     }
     
     # Indicate which items were administered already by "1".
-    for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it){
+    for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it)){
       it.vec[i, catIrt.object$cat_indiv[[i]]$cat_it[j]] <- 1
     }
   }
