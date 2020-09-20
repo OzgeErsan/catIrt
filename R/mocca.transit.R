@@ -21,7 +21,8 @@ mocca.transit <- function(theta2, params2, catIrt.object){
     cat_indiv2[[i]] <- cat_indiv[[i]][c(2,5)]   
     # cat_resp2 is for all responses (e.g. 0,1,2)
     cat_indiv2[[i]]$cat_resp2 <- vector("numeric", length=length(cat_indiv[[i]]$cat_resp))
-    
+    # specify the class of rep2 as grm (graded response model)
+    class(cat_indiv2[[i]]$cat_resp2) <- "grm"
     
     # Insert simulated responses for dimension2 in "cat_resp2" 
     for(n in 1:length(cat_indiv2[[i]]$cat_resp2)){
