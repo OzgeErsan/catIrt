@@ -4,7 +4,7 @@
 # max test length for MOCCA is 40 here 
 ######################################
 
-mocca <- function(cutoff, method, delta, at.select, 
+mocca.run <- function(cutoff, method, delta, at.select, 
                   theta1, theta2, 
                   mocca.n.max, 
                   params1, params2, 
@@ -20,49 +20,14 @@ mocca <- function(cutoff, method, delta, at.select,
   N <- dim(catIrt.object$full_resp)[1] # N is sample size (person)
   J <- dim(catIrt.object$full_resp)[2] # J is item bank size
  
- # ****************************
- # Code below will be deleted, we included it.vec inside mocca.transit
- # ******************************************
-  
-  # Get polytomous item responses on phase1 items
-#  resp <- matrix(0, nrow = N, ncol = J)
-#  it.vec <- matrix(0, nrow = N, ncol = J)
-  
-#  # Simulate type of incorrect response.Instead of 0/1, they are now 1,2,3
-#  for(i in 1:N){
-#    for(j in 1:J){
-#      if(catIrt.object$full_resp[i,j]==1){
-#        resp[i, j]<-2
-#      } else {
-#        params2.vec <- params2[j, ]
-#        p1 <- exp(params2.vec[1]*(theta2[i]-params2.vec[2]))/(1+exp(params2.vec[1]*(theta2[i]-params2.vec[2])))
-#        p0 <- 1-p1
-#        p2 <- exp(params2.vec[1]*(theta2[i]-params2.vec[3]))/(1+exp(params2.vec[1]*(theta2[i]-params2.vec[3])))
-#        p2.star <- p2/(p0+p2)
-#        u <- runif(n=1,min=0,max=1)
-#        if(p2.star > u){resp[i, j] <- 3} else {resp[i, j] <- 1}
-#      }
-#    }
-#    # Fill it.vec to block the items already administered in phase1 during phase2
-#    for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it)){
-#      it.vec[i, catIrt.object$cat_indiv[[i]]$cat_it[j]] <- 1
-#    } 
-#  }
-  
   # Run mocca.transit function
   mocca.transit <- mocca.transit(theta2=theta2, params2=params2, catIrt.object=catIrt.object)
   
   # Get phase2 graded item responses and related info
-  cat_indiv2_phase1 <- mocca.transit$cat_indiv2
+  cat_indiv2_phase1 <- mocca.transit$cat_indiv
   
   # Get it.vec that indicates which item will be blocked during phase2
   it.vec <- mocca.transit$it.vec
-  
-  # Add true theta2 to cat_indiv2_phase1
-  cat_indiv2_phase1$true_theta2 <- theta2
-  
-  # Add phase1 test length to cat_indiv2_phase1
-  cat_indiv2_phase1$cat_length <- catIrt.object$cat_length
   
   # Estimate theta2 for initial theta values for phase2
   init.theta2.vec <- vector(mode = "numeric", length = N)
@@ -72,8 +37,14 @@ mocca <- function(cutoff, method, delta, at.select,
   wleEst.list <- vector(mode="list", length = N)
   for(i in 1:N){
     wleEst.list[[i]] <- wleEst(cat_indiv2_phase1[[i]]$cat_resp2, params=params2[cat_indiv2_phase1[[i]]$cat_it,], range = c(-4.5, 4.5), mod="grm")
-    init.theta2.vec[i]<-cat_indiv2_phase1[[i]]$init.theta2 <- wleEst.list[[i]]$theta
-    cat_indiv2_phase1[[i]]$cat_sem <-  wleEst.list[[i]]$sem
+    init.theta2.vec[i] <- cat_indiv2_phase1[[i]]$cat_theta2 <- wleEst.list[[i]]$theta
+    cat_indiv2_phase1[[i]]$cat_sem <- wleEst.list[[i]]$sem
+    cat_indiv2_phase1[[i]]$cat_info <- wleEst.list[[i]]$info
+  }
+  
+  # Add dimension 2 item parameters used after phase1
+  for( i in 1:N){
+    cat_indiv2_phase1[[i]]$cat_params <- params2[cat_indiv2_phase1[[i]]$cat_it,]
   }
   
   # In phase2 cat_terminate, n.max will be a vector. For instance, entire MOCCA test length will be 40.
@@ -106,87 +77,91 @@ mocca <- function(cutoff, method, delta, at.select,
   #      Can we classify some of the simulees after phase1?
   #*******************************
   
-  # Create a vector to fill with classification decision with phase1 item responses
-  phase1.class.vec <- vector(mode = "numeric", length = N)
-  
   # If a simulee's cat_theta (after phase1) is equal or larger than a est.theta1.no.class value (for example cat_theta >= 1.2), do not classify the simulee.
   for(i in 1:N){
-    if(cat_theta[i] >= est.theta1.no.class){
-      phase1.class.vec[i] <- NA
+    if(catIrt.object$cat_theta[i] >= est.theta1.no.class){
+      cat_indiv2_phase1[[i]]$cat_categ <- NA
     } else {
       # termGLR/termSPRT/termCI is a built-in functionof catIrt. However, brm or grm version of logLik function was automatically selected. E.g. termGLR is used during catIrt simulations, termGLR2 was duplicated with manual change in logLik.grm
       if(method=="SPRT"){
-        for(i in 1:N){
-          phase1.class.vec[i] <- cat_indiv2_phase1[[i]]$cat_categ <- termSPRT(cat_par = params2[cat_indiv2_phase1[[i]]$cat_it,], 
-                                                                              cat_theta = init.theta2.vec[i], 
-                                                                              cat_resp = cat_indiv2_phase1[[i]]$cat_resp2, 
-                                                                              catMiddle = cat_middle2, 
-                                                                              catTerm = cat_terminate2)}
+        cat_indiv2_phase1[[i]]$cat_categ <- termSPRT(cat_par = cat_indiv2_phase1[[i]]$cat_params, 
+                                                     cat_theta = init.theta2.vec[i], 
+                                                     cat_resp = cat_indiv2_phase1[[i]]$cat_resp2, 
+                                                     catMiddle = cat_middle2, 
+                                                     catTerm = cat_terminate2)
       }else if(method=="GLR"){
-        for(i in 1:N){
-          phase1.class.vec[i] <- cat_indiv2_phase1[[i]]$cat_categ <- termGLR(cat_par = params2[cat_indiv2_phase1[[i]]$cat_it,], 
-                                                                             cat_theta = init.theta2.vec[i], 
-                                                                             cat_resp = cat_indiv2_phase1[[i]]$cat_resp2, 
-                                                                             catMiddle = cat_middle2, 
-                                                                             catTerm = cat_terminate2)}
+        cat_indiv2_phase1[[i]]$cat_categ <- termGLR(cat_par = cat_indiv2_phase1[[i]]$cat_params, 
+                                                    cat_theta = init.theta2.vec[i], 
+                                                    cat_resp = cat_indiv2_phase1[[i]]$cat_resp2, 
+                                                    catMiddle = cat_middle2, 
+                                                    catTerm = cat_terminate2)
       } else if(method=="CI"){
-        for(i in 1:N){
-          phase1.class.vec[i] <- cat_indiv2_phase1[[i]]$cat_categ <- termCI(cat_par=params2[cat_indiv2_phase1[[i]]$cat_it,],
-                                                                            cat_theta=init.theta2.vec[i], 
-                                                                            cat_resp = cat_indiv2_phase1[[i]]$cat_resp2,
-                                                                            cat_sem=cat_indiv2_phase1[[i]]$cat_sem, 
-                                                                            catTerm=cat_terminate2)}
+        cat_indiv2_phase1[[i]]$cat_categ <- termCI(cat_par = cat_indiv2_phase1[[i]]$cat_params,
+                                                   cat_theta=init.theta2.vec[i], 
+                                                   cat_resp = cat_indiv2_phase1[[i]]$cat_resp2,
+                                                   cat_sem=cat_indiv2_phase1[[i]]$cat_sem, 
+                                                   catTerm=cat_terminate2)
       }
     }
   }
   
   
-  # Finally attached current classification decisions to phase1 (catIrt.object) output
-  cat_indiv2_phase1$cat_categ <- phase1.class.vec
+  # Add true category after phase1
+  for( i in 1:N){
+    cat_indiv2_phase1[[i]]$true_categ <- class.term$categ[sum( cat_indiv2_phase1[[i]]$true_theta2 > class.term$bounds ) + 1]
+  }
+
   
   #*******************************
   #       Start Phase 2 
   #*******************************
-  # Rest of the code includes temporary solutions. They will be changed.
-  #********************************************
+  # Specify person.vec. This is for deciding which simulee will take phase2 (1), which will not (0).
+  # Who will not take phase2:
+  # a) If est.theta1 is bigger than est.theta1.no.class (these simulees are not classified at all)
+  # b) If a simulee already reached to mocca test length during phase1
+  # c) If a simulee already classified on dimension2 after phase1
   
-  # Run phase2
-  #phase2 <- catIrt(theta = theta2, params=params2, resp=NULL, it=it.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2, progress=T, ddist=NULL)
-  
-  ## If max test length of mocca is also 40:
-  # respecify cat_terminate2, since when n.max=40, current code gives error
-  # It is okey for now as temporary solution, since results for these simulees will be replaced by phase1 results
-  cat_terminate2_2 <- cat_terminate2
+  person.vec <- vector(mode = "numeric", length = N)
   for(i in 1:N){
-    if(cat_terminate2_2$n.max[i]==0){
-      cat_terminate2_2$n.max[i]=1
+    if(catIrt.object$cat_theta[i] >= est.theta1.no.class | catIrt.object$cat_length[i] == mocca.n.max | cat_indiv2_phase1[[i]]$cat_categ %in% class.term$categ ){
+      person.vec[i] <- 0
+    } else {
+      person.vec[i] <- 1
     }
   }
   
-  phase2 <- catIrt(theta = theta2, params=params2, resp=NULL, it=it.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2_2, progress=T, ddist=NULL)
+  # Run catIrt for dimension 2
+  dim2.object <- catIrt2(theta = theta2, params=params2, resp=NULL, it=it.vec, person.vec=person.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2, progress=T, ddist=NULL)
   
   
   #*******************************
   #       Combine initial (after phase1) and final classification (after phase2)
   #*******************************
   
-  # If a categorization is estimated after phase1 for a simulee or if test length is reached to 40 in phase1, use that category.
+  # If a categorization is estimated after phase1 for a simulee or if test length is reached to mocca test length in phase1, use estimated category after phase1.
   for (i in 1:N){
-    if(cat_indiv2_phase1$cat_categ[i] != "ID" | cat_indiv2_phase1$cat_length[i] == mocca.n.max){
-      #Use phase1 categ estimate and test length as mocca length
-      phase2$mocca_categ[i] <- cat_indiv2_phase1$cat_categ[i]
-      phase2$mocca_length[i] <- cat_indiv2_phase1$cat_length[i]
+    if(catIrt.object$cat_theta[i] >= est.theta1.no.class | catIrt.object$cat_length[i] == mocca.n.max | cat_indiv2_phase1[[i]]$cat_categ %in% class.term$categ ){
+      # Use dimension 2 after phase1 outputs as mocca outputs
+      dim2.object$mocca_theta2[i] <- cat_indiv2_phase1[[i]]$cat_theta
+      dim2.object$mocca_categ[i] <- cat_indiv2_phase1[[i]]$cat_categ
+      dim2.object$mocca_length[i] <- cat_indiv2_phase1[[i]]$cat_length <- catIrt.object$cat_length[i]
     } else {
-      #Use phase2 categ estimate and compute mocca test length as phase1 + phase2 test length
-      phase2$mocca_categ[i] <- phase2$cat_categ[i]
-      phase2$mocca_length[i] <- catIrt.object$cat_length[i] + phase2$cat_length[i]
+      # Use dimension 2 after phase2 outputs as mocca outputs  
+      dim2.object$mocca_theta2[i] <- dim2.object$cat_theta[i]
+      dim2.object$mocca_categ[i] <- dim2.object$cat_categ[i]
+      # mocca test length as phase1 + phase2 test length
+      dim2.object$mocca_length[i] <- catIrt.object$cat_length[i] + dim2.object$cat_length[i]
     }
   }
   
-  # Add cat_indiv2_phase1 object to phase2 object
-  phase2$cat_indiv2_phase1 <- cat_indiv2_phase1
+  # Add cat_indiv2_phase1 object to dim2 object
+  dim2.object$cat_indiv2_phase1 <- cat_indiv2_phase1
+  
+  # Add dimension 1 outputs to a final mocca object
+  mocca <- list(dim1 = catIrt.object, dim2 = dim2.object)
   
   # Return
-  return(phase2)
+  return(mocca)
+
 }
 
