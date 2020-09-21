@@ -38,7 +38,7 @@ mocca.transit <- function(theta2, params2, catIrt.object){
           # params2.vec first element is a-parameters; second is b1-parameters; third is b2-parameters
           p1.temp <- exp(params2.vec[1]*(theta2[i]-params2.vec[2]))/(1+exp(params2.vec[1]*(theta2[i]-params2.vec[2])))
           p2 <- exp(params2.vec[1]*(theta2[i]-params2.vec[3]))/(1+exp(params2.vec[1]*(theta2[i]-params2.vec[3])))
-          p1 <- p1.temp-p2
+          # p1 <- p1.temp-p2. This is not used, just showing the reader.
           p0 <- 1-p1.temp
           # Compute relative probability of category 2
           p2.star <- p2/(p0+p2)
