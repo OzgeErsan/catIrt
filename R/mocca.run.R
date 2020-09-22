@@ -132,7 +132,7 @@ mocca.run <- function(cutoff, method, delta, at.select,
   }
   
   # Run catIrt for dimension 2
-  dim2.object <- catIrt2(theta = theta2, params=params2, resp=NULL, it=it.vec, person.vec=person.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2, progress=T, ddist=NULL)
+  dim2.object <- catIrt(theta = theta2, params=params2, resp=NULL, it=it.vec, person.vec=person.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2, progress=T, ddist=NULL)
   
   
   #*******************************
