@@ -26,8 +26,13 @@ mocca.run <- function(cutoff, method, delta, at.select,
   # Get phase2 graded item responses and related info
   cat_indiv2_phase1 <- mocca.transit$cat_indiv
   
-  # Get it.vec that indicates which item will be blocked during phase2
-  it.vec <- mocca.transit$it.vec
+  # Create and fill it.vec to block the items already administered in phase1 during phase2
+  it.vec <- matrix(0, nrow = N, ncol = J)
+  for(i in 1:N){
+    for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it)){
+      it.vec[i, catIrt.object$cat_indiv[[i]]$cat_it[j]] <- 1
+    } 
+  }
   
   # Estimate theta2 for initial theta values for phase2
   init.theta2.vec <- vector(mode = "numeric", length = N)
@@ -47,12 +52,18 @@ mocca.run <- function(cutoff, method, delta, at.select,
     cat_indiv2_phase1[[i]]$cat_params <- params2[cat_indiv2_phase1[[i]]$cat_it,]
   }
   
-  # In phase2 cat_terminate, n.max will be a vector. For instance, entire MOCCA test length will be 40.
+  ### Test length for phase2 ###
+  
+  # Alternative 1: In phase2 cat_terminate, n.max will be a vector. For instance, entire MOCCA test length will be 40.
   mocca.test.len.vec <- vector(mode = "numeric", length = N)
   mocca.test.len.vec <- rep(mocca.n.max, N)
-  
   # Get test length from phase1 and substract it from mocca.test.len.vec. That is n.max for phase2.
   test.len.phase2 <- mocca.test.len.vec - catIrt.object$cat_length
+  
+  # Alternative 2: In phase2, n.max will be same for all simulees/test takers. For instance 10.
+  test.len.phase2 <- 10
+  
+  ### End of test length for phase2 ###
   
   #*******************************
   #      Specify phase2 catIrt function inputs earlier
@@ -119,8 +130,8 @@ mocca.run <- function(cutoff, method, delta, at.select,
   # Specify person.vec. This is for deciding which simulee will take phase2 (1), which will not (0).
   # Who will not take phase2:
   # a) If est.theta1 is bigger than or equal to est.theta1.no.class (these simulees are not classified at all)
-  # b) If a simulee already reached to mocca test length during phase1
-  # c) If a simulee already classified on dimension2 after phase1
+  # b) If a simulee already reached to mocca test length during phase1 (this may be different, final decision has not been made)
+  # c) If a simulee already classified on dimension2 after phase1 (this may be different, final decision has not been made)
   
   person.vec <- vector(mode = "numeric", length = N)
   for(i in 1:N){
