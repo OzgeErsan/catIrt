@@ -3,7 +3,6 @@
 catIrt <- function( params, mod = c("brm", "grm"),
                     resp      = NULL,
                     it        = NULL,
-                    person.vec= NULL,
                     theta     = NULL,
                     catStart  = list( n.start = 5, init.theta = 0,
                                       select = c("UW-FI", "UW-FI-Modified", "LW-FI", "PW-FI",
@@ -986,14 +985,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
 # To store the selection rates (for Sympson-Hetter):
   S <- NULL
 
-  # A vector indicating whether or not the examinee/simulee takes catIrt:
-  if( is.null(person.vec) ){
-    person.vec  <- rep(1, N)
-  } else {
-    person.vec  <- person.vec
-  }
-  
-  
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 # RUNNING THROUGH THE CAT: PER PERSON #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -1011,7 +1003,6 @@ catIrt <- function( params, mod = c("brm", "grm"),
 
 # We will repeat the CAT for each person:
   for( i in 1:N ){
-    if( person.vec[i]==1){
     
 #####
 # 1 # (INITIALIZING THE CAT)
@@ -1191,7 +1182,6 @@ catIrt <- function( params, mod = c("brm", "grm"),
     tot_categ[i] <- catTerm.i$c.term$categ[sum( tot_theta[i] > catTerm.i$c.term$bounds ) + 1]  # based on total-test thetas
   	
     if( !is.null(theta) )
-      # But if theta[i] = catTerm.i$c.term$bounds (like in MOCCA), these simulees are true indeterminates. What should we do?
       true_categ[i] <- catTerm.i$c.term$categ[sum( theta[i] > catTerm.i$c.term$bounds ) + 1]  # based on true thetas
     
   } # END if STATEMENT
@@ -1215,23 +1205,6 @@ catIrt <- function( params, mod = c("brm", "grm"),
                                cat_sem    = c(NA, cat_sem.i[1:j]),
                                cat_resp   = cat_resp.i[1:j],
                                cat_params = cat_par.i[1:j, ] )
-    } else {
-      # Insert NAs to the outputs for examinees/simulees who did not take catIrt 
-      cat_theta[i]        <- NA
-      cat_categ[i]        <- NA
-      cat_info[i]         <- NA
-      cat_sem[i]          <- NA
-      cat_term[i]         <- NA
-      cat_length[i]       <- NA
-      cat_indiv[[i]]      <- list( cat_theta  = NA,
-                                   cat_it     = NA,
-                                   cat_info   = NA,
-                                   cat_sem    = NA,
-                                   cat_resp   = NA,
-                                   cat_params = NA)
-      
-      
-    }
 
 
 #~~~~~~~~~~~~~~~~~~~~~~#
