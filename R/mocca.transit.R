@@ -48,11 +48,12 @@ mocca.transit <- function(theta2, params2, catIrt.object){
     }
     
     # Indicate which items were administered already by "1".
-    for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it)){
-      it.vec[i, catIrt.object$cat_indiv[[i]]$cat_it[j]] <- 1
-    }
+    #for(j in 1:length(catIrt.object$cat_indiv[[i]]$cat_it)){
+     # it.vec[i, catIrt.object$cat_indiv[[i]]$cat_it[j]] <- 1
+    #}
   }
-  return(list(cat_indiv=cat_indiv2, it.vec=it.vec))
+  #return(list(cat_indiv=cat_indiv2, it.vec=it.vec))
+  return(cat_indiv=cat_indiv2)
 }
   
   
