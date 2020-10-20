@@ -125,7 +125,8 @@ mocca.run <- function(cutoff, method, delta, at.select,
 
   
   #*******************************
-  #       Start Phase 2 
+  # Note: Rest of the code most likely will be modified (except dim2.object).
+  # Start Phase 2 
   #*******************************
   # Specify person.vec. This is for deciding which simulee will take phase2 (1), which will not (0).
   # Who will not take phase2:
@@ -133,14 +134,6 @@ mocca.run <- function(cutoff, method, delta, at.select,
   # b) If a simulee already reached to mocca test length during phase1 (this may be different, final decision has not been made)
   # c) If a simulee already classified on dimension2 after phase1 (this may be different, final decision has not been made)
   
-  person.vec <- vector(mode = "numeric", length = N)
-  for(i in 1:N){
-    if(catIrt.object$cat_theta[i] >= est.theta1.no.class | catIrt.object$cat_length[i] == mocca.n.max | cat_indiv2_phase1[[i]]$cat_categ %in% class.term$categ ){
-      person.vec[i] <- 0
-    } else {
-      person.vec[i] <- 1
-    }
-  }
   
   # Run catIrt for dimension 2
   dim2.object <- catIrt(theta = theta2, params=params2, resp=NULL, it=it.vec, person.vec=person.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2, progress=T, ddist=NULL)
