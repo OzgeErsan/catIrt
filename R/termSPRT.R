@@ -40,15 +40,6 @@ function( cat_par, cat_resp, cat_theta,
 # The logLikelihood ratio for each bounds
   for( k in seq_along(bounds) ){
     
-    # If class of cat_resp is "brm" use logLik, if else "grm", use logLik.grm 
-   # if(class(cat_resp)=="brm"){
-    #  likRat[k] <- { logLik(u = cat_resp, params = cat_par, theta = bounds[k] + delta) -
-     #     logLik(u = cat_resp, params = cat_par, theta = bounds[k] - delta) }
-    #} else {
-     # likRat[k] <- { logLik.grm(u = cat_resp, params = cat_par, theta = bounds[k] + delta) -
-      #    logLik.grm(u = cat_resp, params = cat_par, theta = bounds[k] - delta) }
-    #}
-  
     likRat[k] <- { logLik(u = cat_resp, params = cat_par, theta = bounds[k] + delta) -
         logLik(u = cat_resp, params = cat_par, theta = bounds[k] - delta) } 
       
