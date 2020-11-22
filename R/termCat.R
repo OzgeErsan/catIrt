@@ -18,6 +18,8 @@ function(params, resp, mod,
                                          delta    = .1,
                                          alpha    = .05, beta = .05,
                                          conf.lev = .95)),
+         prev_resp = NULL,
+         prev_params = NULL,
          ... )
 {
                                      
@@ -34,12 +36,30 @@ function(params, resp, mod,
 
   j <- nrow(cat_par)
 
+
 #####
 # 1 # (CLASSIFICATION DECISION)
 #####
 
+  
 # If we need to classify somebody, check classification:
   if( any(catTerm$term == "class") ){
+    
+    # UPDATE, JND, 2020-10-26: terminate based on combined response vector
+    # provide previous responses (vector)
+    # and the item parameters (matrix) for the corresponding items
+    # only test with GLR termination, so included that as a condition
+    # we aren't using the other termination rules
+    if(!is.null(prev_resp) & !is.null(prev_params) & catTerm$c.term$method == "GLR"){
+      # want to keep the response vector as class "brm" or "grm"
+      # as logLik function within termGLR depends on the class
+      # (depends on the item response model, which it uses the class to identify)
+      temp_class <- class(cat_resp)
+      cat_resp <- c(prev_resp, cat_resp)
+      class(cat_resp) <- temp_class
+      
+      cat_par <- rbind(prev_params, cat_par)
+    } 
   	
     classFun <- paste("term", catTerm$c.term$method, sep = "")
     categ    <- get(classFun)(cat_par = cat_par, cat_resp = cat_resp,
@@ -82,8 +102,21 @@ function(params, resp, mod,
 # --> figure out the location of the MLE -- that is the classification.
 
   if( any(catTerm$term == "class") & ( !is.na(dec$term) & (dec$term != "class") ) ){
-
-    categ <- catTerm$c.term$categ[sum(cat_theta > catTerm$c.term$bounds) + 1]
+    # UPDATE, JND, 2020-10-26: trying to track down phase2
+      # termination/classification bug
+      # found that this change was added at some point, but then removed?
+        # not sure why
+      # if reach fixed max test length, categorize as ID
+      # instead of forcing classification based on current theta estimate
+    if( !is.null(catTerm$c.term$indeterminate) & catTerm$c.term$indeterminate ) {
+      
+      categ <- "ID"
+      
+    } else{
+      
+      categ <- catTerm$c.term$categ[sum(cat_theta > catTerm$c.term$bounds) + 1]
+      
+    }
         
   } # END if STATEMENT
   

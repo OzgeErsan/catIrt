@@ -38,8 +38,23 @@ catIrt <- function( params, mod = c("brm", "grm"),
                                                     alpha    = .05, beta = .05,
                                                     conf.lev = .95, indeterminate = FALSE)),
                     ddist     = dnorm,
-                    progress  = TRUE, ... )                                  
+                    progress  = TRUE, 
+                    prev_resp = NULL,
+                    prev_params = NULL, ... )                                  
 {
+  
+# UPDATE, JND, 2020-10-26: to use combined response vector for phase2 term
+  # added prev_resp and prev_params arguments
+  # for the responses and corresponding item parameters to 
+  # items administered in phase 1 (but using the phase2 model responses and params)
+  # these are specified a bit differently than the norm in catIrt:
+  # prev_resp is a list of numeric vectors, each element of the list is 1 simulee
+    # each vector contains that simulees responses to just the items they took
+  # pre_params is a list of matrices, each element of the list is 1 simulee
+    # each matrix is just 3 columns, for the item params a, b1, b2
+    # might be better to just specify the items they took,
+    # then get the params by subsetting params argument, but oh well for now
+
 
 # Make sure that the environments are OK, so that the "<<-" works.
   environment(startCat)  <- environment()
@@ -1004,6 +1019,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
 # We will repeat the CAT for each person:
   for( i in 1:N ){
     
+    
 #####
 # 1 # (INITIALIZING THE CAT)
 #####
@@ -1017,6 +1033,13 @@ catIrt <- function( params, mod = c("brm", "grm"),
     catMiddle.i$phase1.theta <- catMiddle.i$phase1.theta[i]
     catTerm.i   <- catTerm
     catTerm.i$n.max <- catTerm.i$n.max[i]
+    
+  # UPDATE, JND, 2020-10-26: to use combined response vector for phase2 term
+    # individuals responses to items they took in phase1 
+    # and the parameters for those items
+    # select the particular simulee's previous responses and those item params
+    prev_resp.i <- prev_resp[[i]]
+    prev_params.i <- prev_params[[i]]  
   
 # Second, the particular simulee's initial theta value and classification bounds:
     catStart.i$init.theta     <- catStart$init.theta[i]
@@ -1079,7 +1102,7 @@ catIrt <- function( params, mod = c("brm", "grm"),
       cat_sem.i[j]       <- x$sem
       
     } # END if STATEMENT
-
+    
 # Before entering the loop check the termination criterion:
     y <- termCat( params    = params[ , -c(1, ncol(params))],
                   resp      = resp.i,
@@ -1090,7 +1113,9 @@ catIrt <- function( params, mod = c("brm", "grm"),
                   cat_theta = cat_theta.i[j + 1],
                   cat_info  = cat_info.i,
                   cat_sem   = cat_sem.i,
-                  catStart  = catStart.i, catMiddle = catMiddle.i, catTerm = catTerm.i )
+                  catStart  = catStart.i, catMiddle = catMiddle.i, catTerm = catTerm.i,
+                  prev_resp = prev_resp.i,
+                  prev_params = prev_params.i)
      
 # And if we should stop, skip the while loop altogether:           
     stp <- y$cat_dec$stp
@@ -1129,7 +1154,9 @@ catIrt <- function( params, mod = c("brm", "grm"),
                     cat_theta = cat_theta.i[j + 1],
                     cat_info = cat_info.i,
                     cat_sem  = cat_sem.i,
-                    catStart = catStart.i, catMiddle = catMiddle.i, catTerm = catTerm.i )
+                    catStart = catStart.i, catMiddle = catMiddle.i, catTerm = catTerm.i,
+                    prev_resp = prev_resp.i,
+                    prev_params = prev_params.i)
                     
       stp <- y$cat_dec$stp
       

@@ -39,8 +39,17 @@ mocca.run <- function(cutoff, method, delta, at.select,
   
   # Use catIrt wleEst function to estimate theta for dimension2 after phase1 &
   # Add phase1 wleEst's sem and info output to cat_indiv2_phase1. sem will be used during termCI after phase1
+  
+  # UPDATE, JND, 2020-10-26: storing responses and item params for the 
+  # corresponding items, to use in phase2 termination 
   wleEst.list <- vector(mode="list", length = N)
+  resp2.list <- vector(mode="list", length = N)
+  params2.list <- vector(mode="list", length = N)
+  
   for(i in 1:N){
+    resp2.list[[i]] <- cat_indiv2_phase1[[i]]$cat_resp2
+    params2.list[[i]] <- params2[cat_indiv2_phase1[[i]]$cat_it,]
+    
     wleEst.list[[i]] <- wleEst(cat_indiv2_phase1[[i]]$cat_resp2, params=params2[cat_indiv2_phase1[[i]]$cat_it,], range = c(-4.5, 4.5), mod="grm")
     init.theta2.vec[i] <- cat_indiv2_phase1[[i]]$cat_theta2 <- wleEst.list[[i]]$theta
     cat_indiv2_phase1[[i]]$cat_sem <- wleEst.list[[i]]$sem
@@ -136,7 +145,11 @@ mocca.run <- function(cutoff, method, delta, at.select,
   
   
   # Run catIrt for dimension 2
-  dim2.object <- catIrt(theta = theta2, params=params2, resp=NULL, it=it.vec, person.vec=person.vec, mod="grm", catStart = cat_start2, catMiddle = cat_middle2, catTerm=cat_terminate2, progress=T, ddist=NULL)
+  dim2.object <- catIrt(theta = theta2, params=params2, resp=NULL, it=it.vec, 
+                        person.vec=person.vec, mod="grm", catStart = cat_start2, 
+                        catMiddle = cat_middle2, catTerm=cat_terminate2, 
+                        progress=T, ddist=NULL,
+                        prev_resp = resp2.list, prev_params = params2.list)
   
   
   #*******************************
