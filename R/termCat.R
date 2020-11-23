@@ -17,9 +17,7 @@ function(params, resp, mod,
                                          categ    = c(0, 1, 2),
                                          delta    = .1,
                                          alpha    = .05, beta = .05,
-                                         conf.lev = .95)),
-         prev_resp = NULL,
-         prev_params = NULL,
+                                         conf.lev = .95, indeterminate=FALSE)),
          ... )
 {
                                      
@@ -102,22 +100,15 @@ function(params, resp, mod,
 # --> figure out the location of the MLE -- that is the classification.
 
   if( any(catTerm$term == "class") & ( !is.na(dec$term) & (dec$term != "class") ) ){
-    # UPDATE, JND, 2020-10-26: trying to track down phase2
-      # termination/classification bug
-      # found that this change was added at some point, but then removed?
-        # not sure why
-      # if reach fixed max test length, categorize as ID
-      # instead of forcing classification based on current theta estimate
     if( !is.null(catTerm$c.term$indeterminate) & catTerm$c.term$indeterminate ) {
       
       categ <- "ID"
       
-    } else{
+    } else {
       
       categ <- catTerm$c.term$categ[sum(cat_theta > catTerm$c.term$bounds) + 1]
       
     }
-        
   } # END if STATEMENT
   
 
