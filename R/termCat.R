@@ -18,6 +18,8 @@ function(params, resp, mod,
                                          delta    = .1,
                                          alpha    = .05, beta = .05,
                                          conf.lev = .95, indeterminate=FALSE)),
+         prev_resp = NULL,
+         prev_params = NULL,
          ... )
 {
                                      
