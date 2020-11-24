@@ -17,10 +17,7 @@ function(params, resp, mod,
                                          categ    = c(0, 1, 2),
                                          delta    = .1,
                                          alpha    = .05, beta = .05,
-                                         conf.lev = .95, indeterminate=FALSE,
-                                         prev_resp = NULL,
-                                         prev_params = NULL,)),
-         
+                                         conf.lev = .95, indeterminate=FALSE)),
          ... )
 {
                                      
